@@ -3,7 +3,7 @@ from mfrc522 import SimpleMFRC522
 import time
 
 reader=SimpleMFRC522()
-GPIO.setup(11, GPIO.out, initial=0)
+GPIO.setup(11, GPIO.OUT, initial=0)
 
 try:
 	id, text=reader.read()

@@ -1,0 +1,45 @@
+import sys
+sys.path.insert(0, "~/.local/lib/python3.6/site-packages")
+import pymysql
+from flask import Flask, request, jsonify
+from datetime import datetime
+
+now = datetime.now()
+now = now.strftime('%Y-%m-%d %H:%M:%S')
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello World! ' + 'This is the homepage for group 5'
+
+@app.route('/moisture', methods=['POST', 'GET'])
+def postMoisture():
+    connection = pymysql.connect(host='[redacted]',
+                                 user='[redacted]',
+                                 password='[redacted]',
+                                 db='MINI_PROJECT',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+    if (request.method=='POST'):
+        try:
+            json = request.json
+            moisture = json['moisture_content']
+            time = json['time_posted'] 
+            with connection.cursor() as cursor:
+                sql = "INSERT INTO `Moisture` (`id`, `moisture_content`, `time_posted`) VALUES (%s, %s, %s)"
+                data = (None, moisture, time) # None due to auto-incrementing id
+                cursor.execute(sql, data)
+                connection.commit()
+            return 'Successfully posted moisture data.'
+        finally:
+            connection.close()
+
+    if (request.method=='GET'):
+        try:
+            with connection.cursor() as cursor:
+                sql = "SELECT * FROM (SELECT * FROM `Moisture` ORDER BY id DESC LIMIT 10) sub ORDER BY id ASC"
+                cursor.execute(sql)
+                moistureList = cursor.fetchmany(10)
+                return jsonify(moistureList)
+        finally:
+            connection.close()
